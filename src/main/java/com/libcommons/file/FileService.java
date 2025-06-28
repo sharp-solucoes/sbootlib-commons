@@ -16,7 +16,6 @@ import java.nio.file.StandardOpenOption;
 
 @Service
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 public class FileService {
 
