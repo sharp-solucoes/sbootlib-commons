@@ -1,7 +1,11 @@
 package com.libcommons.file;
 
 import com.libcommons.classes.ServiceException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,15 +14,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+@Service
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
 public class FileService {
 
-    private static final String DEFAULT_TEMP_DIR = "temp";
+    private final String DEFAULT_TEMP_DIR = "temp";
 
     public Path getOrCreateTempDirectory() {
-        Path tempDir = this.get(DEFAULT_TEMP_DIR);
+        Path tempDir = get(DEFAULT_TEMP_DIR);
 
-        if (this.notExists(tempDir)) {
-            this.createDirectory(tempDir);
+        if (notExists(tempDir)) {
+            createDirectory(tempDir);
         }
 
         return tempDir;
@@ -28,17 +36,17 @@ public class FileService {
         return Paths.get(first);
     }
 
-    public static void writeContentToFile(File file, String content) throws IOException {
+    public void writeContentToFile(File file, String content) throws IOException {
         Files.write(file.toPath(), content.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     public File createTempFileWithContent(String prefix, String extension, String content) throws IOException {
-        File file = this.createTempFile(prefix, extension);
+        File file = createTempFile(prefix, extension);
         writeContentToFile(file, content);
         return file;
     }
 
-    public static boolean deleteFile(File file) {
+    public boolean deleteFile(File file) {
         return file.delete();
     }
 
@@ -56,7 +64,7 @@ public class FileService {
 
     private File createTempFile(String prefix, String extension) throws IOException {
 
-        Path tempDir = this.getOrCreateTempDirectory();
+        Path tempDir = getOrCreateTempDirectory();
 
         String sanitized = sanitizeFileName(prefix);
         String filename = sanitized + "." + extension;
@@ -66,7 +74,7 @@ public class FileService {
         return filePath.toFile();
     }
 
-    private static String sanitizeFileName(String fileName) {
+    private String sanitizeFileName(String fileName) {
         return fileName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
     }
 }
