@@ -1,11 +1,9 @@
 package com.libcommons.file;
 
 import com.libcommons.classes.ServiceException;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,10 +12,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-@Service
+@Component
 @NoArgsConstructor
-@Getter
-public class FileService {
+public class FileHelper {
 
     private final String DEFAULT_TEMP_DIR = "temp";
 
@@ -61,13 +58,10 @@ public class FileService {
         return Files.notExists(path);
     }
 
-    private File createTempFile(String prefix, String extension) throws IOException {
-
+    public File createTempFile(String prefix, String extension) throws IOException {
         Path tempDir = getOrCreateTempDirectory();
-
         String sanitized = sanitizeFileName(prefix);
         String filename = sanitized + "." + extension;
-
         Path filePath = tempDir.resolve(filename);
         Files.createFile(filePath);
         return filePath.toFile();
