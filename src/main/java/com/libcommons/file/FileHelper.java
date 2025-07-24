@@ -2,11 +2,14 @@ package com.libcommons.file;
 
 import com.libcommons.classes.ServiceException;
 import lombok.NoArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
 
 @Component
@@ -39,12 +42,16 @@ public class FileHelper {
         return targetFile;
     }
 
-    public Path saveMultipartFile(MultipartFile file, String fileNamePrefix) throws IOException {
+    public Path saveResource(Resource resource, String fileNamePrefix) throws IOException {
+        return saveInputStream(resource.getInputStream(), resource.getFilename(), fileNamePrefix);
+    }
+
+    private Path saveInputStream(InputStream inputStream, String originalName, String fileNamePrefix) throws IOException {
         Path baseDir = getOrCreateBaseDirectory();
-        String extension = getFileExtension(file.getOriginalFilename());
+        String extension = getFileExtension(originalName);
         String safeName = sanitizeFileName(fileNamePrefix) + (extension.isEmpty() ? "" : "." + extension);
         Path targetFile = baseDir.resolve(safeName);
-        Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
         return targetFile;
     }
 
@@ -57,9 +64,13 @@ public class FileHelper {
         return filePath;
     }
 
-    public void overwriteFile(MultipartFile file, String fullFileName) throws IOException {
+    public void overwriteFile(Resource resource, String fullFileName) throws IOException {
+        overwriteInputStream(resource.getInputStream(), fullFileName);
+    }
+
+    private void overwriteInputStream(InputStream inputStream, String fullFileName) throws IOException {
         Path filePath = getFilePath(fullFileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public boolean deleteFile(Path filePath) {
@@ -75,7 +86,16 @@ public class FileHelper {
     }
 
     private String getFileExtension(String filename) {
+        if (filename == null) return "";
         int dotIndex = filename.lastIndexOf('.');
         return (dotIndex == -1) ? "" : filename.substring(dotIndex + 1);
+    }
+
+    public Path saveBufferedImage(BufferedImage image, String fileNamePrefix, String format) throws IOException {
+        Path baseDir = getOrCreateBaseDirectory();
+        String safeName = sanitizeFileName(fileNamePrefix) + "." + format;
+        Path targetFile = baseDir.resolve(safeName);
+        ImageIO.write(image, format, targetFile.toFile());
+        return targetFile;
     }
 }
