@@ -6,7 +6,7 @@
 
     <groupId>com.libcommons</groupId>
     <artifactId>sbootlib-commons</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <packaging>jar</packaging>
 
     <properties>
