@@ -13,44 +13,53 @@ import java.nio.file.*;
 @NoArgsConstructor
 public class FileHelper {
 
-    private String tempDirName = "temp";
+    private String baseDirName = "files";
 
-    public FileHelper(String tempDirName) {
-        this.tempDirName = tempDirName;
+    public FileHelper(String baseDirName) {
+        this.baseDirName = baseDirName;
     }
 
-    public Path getOrCreateTempDirectory() {
-        Path tempDir = Paths.get(tempDirName);
-        if (Files.notExists(tempDir)) {
+    public Path getOrCreateBaseDirectory() {
+        Path baseDir = Paths.get(baseDirName);
+        if (Files.notExists(baseDir)) {
             try {
-                Files.createDirectories(tempDir);
+                Files.createDirectories(baseDir);
             } catch (IOException e) {
-                throw new ServiceException("Erro ao criar diretório temporário: " + tempDir, "FileHelper", "getOrCreateTempDirectory", HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new ServiceException("Erro ao criar diretório: " + baseDir, "FileHelper", "getOrCreateBaseDirectory", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        return tempDir;
+        return baseDir;
     }
 
-    public Path createTempFile(String prefix, String extension) throws IOException {
-        Path tempDir = getOrCreateTempDirectory();
-        return Files.createTempFile(tempDir, sanitizeFileName(prefix) + "_", "." + extension);
+    public Path saveStringToFile(String fileName, String extension, String content) throws IOException {
+        Path baseDir = getOrCreateBaseDirectory();
+        String safeName = sanitizeFileName(fileName) + "." + extension;
+        Path targetFile = baseDir.resolve(safeName);
+        Files.writeString(targetFile, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        return targetFile;
     }
 
-    public Path saveStringToFile(String prefix, String extension, String content) throws IOException {
-        Path tempFile = createTempFile(prefix, extension);
-        Files.writeString(tempFile, content, StandardOpenOption.TRUNCATE_EXISTING);
-        return tempFile;
-    }
-
-    public Path saveMultipartFileToTemp(MultipartFile file, String prefix) throws IOException {
+    public Path saveMultipartFile(MultipartFile file, String fileNamePrefix) throws IOException {
+        Path baseDir = getOrCreateBaseDirectory();
         String extension = getFileExtension(file.getOriginalFilename());
-        Path tempFile = createTempFile(prefix, extension);
-        Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-        return tempFile;
+        String safeName = sanitizeFileName(fileNamePrefix) + (extension.isEmpty() ? "" : "." + extension);
+        Path targetFile = baseDir.resolve(safeName);
+        Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+        return targetFile;
     }
 
-    public void writeContentToFile(Path filePath, String content) throws IOException {
-        Files.writeString(filePath, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    public Path getFilePath(String fileName) {
+        Path baseDir = getOrCreateBaseDirectory();
+        Path filePath = baseDir.resolve(sanitizeFileName(fileName));
+        if (!Files.exists(filePath)) {
+            throw new ServiceException("Arquivo não encontrado: " + fileName, "FileHelper", "getFilePath", HttpStatus.NOT_FOUND);
+        }
+        return filePath;
+    }
+
+    public void overwriteFile(MultipartFile file, String fullFileName) throws IOException {
+        Path filePath = getFilePath(fullFileName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public boolean deleteFile(Path filePath) {
