@@ -59,7 +59,7 @@ public class FileHelper {
         Path baseDir = getOrCreateBaseDirectory();
         Path filePath = baseDir.resolve(sanitizeFileName(fileName));
         if (!Files.exists(filePath)) {
-            throw new ServiceException("Arquivo não encontrado: " + fileName, "FileHelper", "getFilePath", HttpStatus.NOT_FOUND);
+            return null;
         }
         return filePath;
     }
